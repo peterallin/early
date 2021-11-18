@@ -41,7 +41,12 @@ impl Early {
     }
 
     pub fn build(self) -> String {
-        self.scheme + "://" + &self.host + &self.port.map(|p| format!(":{}", p)).unwrap_or_default()
+        let port = self.port_fragment();
+        self.scheme + "://" + &self.host + &port
+    }
+
+    fn port_fragment(&self) -> String {
+        self.port.map(|p| format!(":{}", p)).unwrap_or_default()
     }
 }
 
