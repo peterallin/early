@@ -16,14 +16,14 @@ impl Early {
         scheme + &self.host.unwrap_or_default()
     }
 
-    pub fn scheme(self, scheme: &str) -> Self {
+    pub fn scheme<S: Into<String>>(self, scheme: S) -> Self {
         Early {
             scheme: Some(scheme.into()),
             ..self
         }
     }
 
-    pub fn host(self, host: &str) -> Self {
+    pub fn host<S: Into<String>>(self, host: S) -> Self {
         Early {
             host: Some(host.into()),
             ..self
@@ -42,14 +42,26 @@ mod tests {
     }
 
     #[test]
-    fn just_a_scheme() {
+    fn just_a_scheme_str() {
         let url = Early::new().scheme("http").build();
         assert_eq!("http://", url);
     }
 
     #[test]
-    fn scheme_plus_host() {
+    fn just_a_scheme_string() {
+        let url = Early::new().scheme("http".to_string()).build();
+        assert_eq!("http://", url);
+    }
+
+    #[test]
+    fn scheme_plus_host_str() {
         let url = Early::new().scheme("https").host("example.com").build();
+        assert_eq!("https://example.com", url);
+    }
+
+    #[test]
+    fn scheme_plus_host_string() {
+        let url = Early::new().scheme("https").host("example.com".to_string()).build();
         assert_eq!("https://example.com", url);
     }
 }
