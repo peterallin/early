@@ -17,11 +17,12 @@ impl EarlyNeedingHost {
         Early {
             host: host.into(),
             scheme: self.scheme,
-            port: None,
+            ..Default::default()
         }
     }
 }
 
+#[derive(Default)]
 pub struct Early {
     scheme: String,
     host: String,
