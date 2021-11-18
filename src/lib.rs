@@ -1,29 +1,29 @@
-struct Early {
+pub struct Early {
     scheme: Option<String>,
     host: Option<String>,
 }
 
 impl Early {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             scheme: None,
             host: None,
         }
     }
 
-    fn build(self) -> String {
+    pub fn build(self) -> String {
         let scheme = self.scheme.map(|s| s + "://").unwrap_or("".into());
         scheme + &self.host.unwrap_or_default()
     }
 
-    fn scheme(self, scheme: &str) -> Self {
+    pub fn scheme(self, scheme: &str) -> Self {
         Early {
             scheme: Some(scheme.into()),
             ..self
         }
     }
 
-    fn host(self, host: &str) -> Self {
+    pub fn host(self, host: &str) -> Self {
         Early {
             host: Some(host.into()),
             ..self
