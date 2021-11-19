@@ -29,6 +29,7 @@ pub struct Early {
     scheme: String,
     host: String,
     port: Option<u16>,
+    paths: Vec<String>,
     query: Vec<(String, String)>,
 }
 
@@ -45,6 +46,11 @@ impl Early {
         }
     }
 
+    pub fn path<S: Into<String>>(mut self, path: S) -> Self {
+        self.paths.push(path.into());
+        self
+    }
+
     pub fn query<S: Into<String>>(mut self, key: S, value: S) -> Self {
         self.query.push((key.into(), value.into()));
         self
@@ -53,7 +59,8 @@ impl Early {
     pub fn build(self) -> String {
         let port = self.port_fragment();
         let query = self.query_fragment();
-        self.scheme + "://" + &self.host + &port + &query
+        let path = self.path_fragment();
+        self.scheme + "://" + &self.host + &port + &path + &query
     }
 
     fn port_fragment(&self) -> String {
@@ -72,6 +79,16 @@ impl Early {
             query
         } else {
             "?".to_owned() + &query
+        }
+    }
+
+    #[allow(unstable_name_collisions)] // I will be wanting to use the new function when it's available
+    fn path_fragment(&self) -> String {
+        let path: String = self.paths.iter().cloned().intersperse("/".into()).collect();
+        if path.is_empty() {
+            path
+        } else {
+            "/".to_owned() + &path
         }
     }
 }
@@ -130,5 +147,26 @@ mod tests {
             "https://example.com?my_key1=my_value1&my_key2=my_value2",
             url
         );
+    }
+
+    #[test]
+    fn can_add_single_path_element() {
+        let url = Early::new()
+            .scheme("http")
+            .host("example.com")
+            .path("foo")
+            .build();
+        assert_eq!(url, "http://example.com/foo");
+    }
+    #[test]
+    fn can_add_multiple_path_elements() {
+        let url = Early::new()
+            .scheme("http")
+            .host("example.com")
+            .path("foo")
+            .path("bar")
+            .path("baz")
+            .build();
+        assert_eq!(url, "http://example.com/foo/bar/baz");
     }
 }
