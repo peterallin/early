@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 pub struct EarlyNeedingScheme;
 
 impl EarlyNeedingScheme {
@@ -27,9 +29,11 @@ pub struct Early {
     scheme: String,
     host: String,
     port: Option<u16>,
+    query: Vec<(String, String)>,
 }
 
 impl Early {
+    #[allow(clippy::new_ret_no_self)] // Clippy is right, but I want it to look like there's only one type involved... might be a bad idea
     pub fn new() -> EarlyNeedingScheme {
         EarlyNeedingScheme
     }
@@ -41,13 +45,34 @@ impl Early {
         }
     }
 
+    pub fn query<S: Into<String>>(mut self, key: S, value: S) -> Self {
+        self.query.push((key.into(), value.into()));
+        self
+    }
+
     pub fn build(self) -> String {
         let port = self.port_fragment();
-        self.scheme + "://" + &self.host + &port
+        let query = self.query_fragment();
+        self.scheme + "://" + &self.host + &port + &query
     }
 
     fn port_fragment(&self) -> String {
         self.port.map(|p| format!(":{}", p)).unwrap_or_default()
+    }
+
+    #[allow(unstable_name_collisions)] // I will be wanting to use the new function when it's available
+    fn query_fragment(&self) -> String {
+        let query: String = self
+            .query
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .intersperse("&".into())
+            .collect();
+        if query.is_empty() {
+            query
+        } else {
+            "?".to_owned() + &query
+        }
     }
 }
 
@@ -81,5 +106,29 @@ mod tests {
             .port(8080)
             .build();
         assert_eq!("http://example.com:8080", url);
+    }
+
+    #[test]
+    fn can_add_single_query_key_value() {
+        let url = Early::new()
+            .scheme("https")
+            .host("example.com")
+            .query("my_key", "my_value")
+            .build();
+        assert_eq!("https://example.com?my_key=my_value", url);
+    }
+
+    #[test]
+    fn can_add_two_query_key_values() {
+        let url = Early::new()
+            .scheme("https")
+            .host("example.com")
+            .query("my_key1", "my_value1")
+            .query("my_key2", "my_value2")
+            .build();
+        assert_eq!(
+            "https://example.com?my_key1=my_value1&my_key2=my_value2",
+            url
+        );
     }
 }
