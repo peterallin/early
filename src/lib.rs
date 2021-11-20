@@ -1,5 +1,8 @@
 use itertools::Itertools;
 
+mod prepend_if_not_empty;
+use prepend_if_not_empty::PrependIfNotEmpty;
+
 #[derive(Default)]
 pub struct Early {
     scheme: String,
@@ -48,27 +51,22 @@ impl Early {
 
     #[allow(unstable_name_collisions)] // I will be wanting to use the new function when it's available
     fn query_fragment(&self) -> String {
-        let query: String = self
-            .query
+        self.query
             .iter()
             .map(|(k, v)| format!("{}={}", k, v))
             .intersperse("&".into())
-            .collect();
-        if query.is_empty() {
-            query
-        } else {
-            "?".to_owned() + &query
-        }
+            .collect::<String>()
+            .prepend_if_not_empty("?")
     }
 
     #[allow(unstable_name_collisions)] // I will be wanting to use the new function when it's available
     fn path_fragment(&self) -> String {
-        let path: String = self.paths.iter().cloned().intersperse("/".into()).collect();
-        if path.is_empty() {
-            path
-        } else {
-            "/".to_owned() + &path
-        }
+        self.paths
+            .iter()
+            .cloned()
+            .intersperse("/".into())
+            .collect::<String>()
+            .prepend_if_not_empty("/")
     }
 }
 
@@ -119,7 +117,7 @@ mod tests {
         let url = Early::new("http", "example.com").path("foo").build();
         assert_eq!(url, "http://example.com/foo");
     }
-    
+
     #[test]
     fn can_add_multiple_path_elements() {
         let url = Early::new("http", "example.com")
