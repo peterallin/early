@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
-mod prepend_if_not_empty;
-use prepend_if_not_empty::PrependIfNotEmpty;
+mod extra_iters;
+use extra_iters::ExtraIters;
 
 #[derive(Default)]
 pub struct Early {
@@ -55,8 +55,8 @@ impl Early {
             .iter()
             .map(|(k, v)| format!("{}={}", k, v))
             .intersperse("&".into())
-            .collect::<String>()
             .prepend_if_not_empty("?")
+            .collect()
     }
 
     #[allow(unstable_name_collisions)] // I will be wanting to use the new function when it's available
@@ -65,8 +65,8 @@ impl Early {
             .iter()
             .cloned()
             .intersperse("/".into())
-            .collect::<String>()
             .prepend_if_not_empty("/")
+            .collect()
     }
 }
 
