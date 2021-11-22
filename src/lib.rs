@@ -53,7 +53,7 @@ impl Early {
     fn query_fragment(&self) -> String {
         self.query
             .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
             .intersperse("&".into())
             .prepend_if_not_empty("?")
             .collect()
@@ -63,7 +63,7 @@ impl Early {
     fn path_fragment(&self) -> String {
         self.paths
             .iter()
-            .cloned()
+            .map(|p| urlencoding::encode(p).into_owned())
             .intersperse("/".into())
             .prepend_if_not_empty("/")
             .collect()
@@ -126,5 +126,20 @@ mod tests {
             .path("baz")
             .build();
         assert_eq!(url, "http://example.com/foo/bar/baz");
+    }
+
+    #[test]
+    fn url_encodes_queries() {
+        let url = Early::new("https", "example.com")
+            .path("foo")
+            .query("a b c", "d/e/f g")
+            .build();
+        assert_eq!(url, "https://example.com/foo?a%20b%20c=d%2Fe%2Ff%20g");
+    }
+
+    #[test]
+    fn url_encodes_path() {
+        let url = Early::new("http", "example.com").path("foo bar").build();
+        assert_eq!(url, "http://example.com/foo%20bar");
     }
 }
