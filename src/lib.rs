@@ -3,7 +3,7 @@ use itertools::Itertools;
 mod extra_iters;
 use extra_iters::ExtraIters;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Early {
     scheme: String,
     host: String,
@@ -141,5 +141,23 @@ mod tests {
     fn url_encodes_path() {
         let url = Early::new("http", "example.com").path("foo bar").build();
         assert_eq!(url, "http://example.com/foo%20bar");
+    }
+
+    #[test]
+    fn enables_building_of_variant_urls() {
+        let base = Early::new("https", "example.com")
+            .path("api")
+            .query("version", "42");
+        let people_url = base.clone().path("people").build();
+        let machines_url = base
+            .clone()
+            .path("machines")
+            .query("type", "perpetual motion")
+            .build();
+        assert_eq!(people_url, "https://example.com/api/people?version=42");
+        assert_eq!(
+            machines_url,
+            "https://example.com/api/machines?version=42&type=perpetual%20motion"
+        );
     }
 }
