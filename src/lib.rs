@@ -1,8 +1,29 @@
+//! This library aims to enable easy creation of families of URLs. For example many APIs
+//! needs one to access URLs, where the host name, port number, part of the path and 
+//! possibly some part of the query string is the same, but the last part of the path 
+//! differs. An example:
+//! ```
+//! use early::Early;
+//! let base = Early::new("https", "example.com")
+//!     .path("api")
+//!     .query("api-version", "42")
+//!     .port(8080);
+//! let people_url = base.clone().path("people").build();
+//! let machines_url = base.path("machines").build();
+//! assert_eq!(people_url, "https://example.com:8080/api/people?api-version=42");
+//! assert_eq!(machines_url, "https://example.com:8080/api/machines?api-version=42");
+//! ```
+
 use itertools::Itertools;
 
 mod extra_iters;
 use extra_iters::ExtraIters;
 
+/// Used to build URLs.
+/// 
+/// Call the functions adding parts ([Self::port], [Self::path], and [Self::query]) to the URL to
+/// construct it and finally call [Self::build] to create the URL. When you need to construct 
+/// families of URLs [Self::clone] the [Early] struct at the points where the families varies.
 #[derive(Default, Clone)]
 pub struct Early {
     scheme: String,
@@ -13,6 +34,7 @@ pub struct Early {
 }
 
 impl Early {
+    /// Constructs a new [Early] builder.
     pub fn new<S1: Into<String>, S2: Into<String>>(scheme: S1, host: S2) -> Self {
         Self {
             scheme: scheme.into(),
@@ -21,6 +43,14 @@ impl Early {
         }
     }
 
+    /// Adds a port number to the URL being built.
+    /// # Example
+    /// ```
+    /// let url = early::Early::new("http", "example.com").port(1234).build();
+    /// assert_eq!(url, "http://example.com:1234");
+    /// ```
+    /// 
+    /// Repeated calls will override the first given port.
     pub fn port(self, port: u16) -> Self {
         Self {
             port: Some(port),
@@ -28,16 +58,41 @@ impl Early {
         }
     }
 
+    /// Adds a path segment to the URL being built.
+    /// Repeated calls will add multiple path segments.
+    /// 
+    /// # Example
+    /// ```
+    /// let url = early::Early::new("http", "example.com")
+    ///   .path("foo")
+    ///   .path("bar")
+    ///   .path("baz")
+    ///   .build();
+    /// assert_eq!(url, "http://example.com/foo/bar/baz");
+    /// ```
     pub fn path<S: Into<String>>(mut self, path: S) -> Self {
         self.paths.push(path.into());
         self
     }
 
-    pub fn query<S: Into<String>>(mut self, key: S, value: S) -> Self {
+    /// Adds a key/value pair to the query string part of URL being built.
+    /// Repeated calls will add additional key/value pairs.
+    /// 
+    /// # Example
+    /// ```
+    /// let url = early::Early::new("http", "example.com")
+    ///     .query("foo", "abc")
+    ///     .query("bar", "42")
+    ///     .query("baz", "very much")
+    ///     .build();
+    /// assert_eq!(url, "http://example.com?foo=abc&bar=42&baz=very%20much");
+    /// ```
+    pub fn query<S1: Into<String>, S2: Into<String>>(mut self, key: S1, value: S2) -> Self {
         self.query.push((key.into(), value.into()));
         self
     }
 
+    /// Construct a string from `self`.
     pub fn build(self) -> String {
         let port = self.port_fragment();
         let query = self.query_fragment();
