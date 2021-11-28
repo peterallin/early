@@ -1,5 +1,6 @@
 # early
 ![CI](https://github.com/peterallin/early/actions/workflows/ci.yml/badge.svg)
+![crates.io](https://img.shields.io/crates/v/early.svg)
 
 A Rust crate for generating families of URLs. The major use case is to
 generate the URLs used to interact with an API, where a small part of
